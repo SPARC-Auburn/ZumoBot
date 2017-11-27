@@ -19,7 +19,7 @@ const uint16_t lineSensorThreshold = 1000;
 
 bool senseDir = RIGHT;
 
-const uint16_t deceleration = 10;
+const uint16_t deceleration = 100;
 
 // The amount to increase the speed by during each cycle when an
 // object is not seen.
@@ -42,30 +42,30 @@ uint16_t turnSpeed = 100;
 
 
 // The speed that the robot uses when backing up.
-const uint16_t reverseSpeed = 100;
+const uint16_t reverseSpeed = 400;
 
 
 // The speed that the robot usually uses when moving forward.
 // You don't want this to be too fast because then the robot
 // might fail to stop when it detects the white border.
-const uint16_t forwardSpeed = 100;
+const uint16_t forwardSpeed = 250;
 
 // These two variables specify the speeds to apply to the motors
 // when veering left or veering right.  While the robot is
 // driving forward, it uses its proximity sensors to scan for
 // objects ahead of it and tries to veer towards them.
 const uint16_t veerSpeedLow = 0;
-const uint16_t veerSpeedHigh = 100;
+const uint16_t veerSpeedHigh = 400;
 
 // The speed that the robot drives when it detects an opponent in
 // front of it, either with the proximity sensors or by noticing
 // that it is caught in a stalemate (driving forward for several
 // seconds without reaching a border).  400 is full speed.
-const uint16_t rammingSpeed = 100;
+const uint16_t rammingSpeed = 400;
 
 // The amount of time to spend backing up after detecting a
 // border, in milliseconds.
-const uint16_t reverseTime = 200;
+const uint16_t reverseTime = 400;
 
 // The minimum amount of time to spend scanning for nearby
 // opponents, in milliseconds.
@@ -114,14 +114,28 @@ void loop() {
     int i = 0;
     
     while(true){
-      
+      if(bool buttonPress = buttonA.getSingleDebouncedPress() == true){
+    //Stand By
+    motors.setSpeeds(0, 0);
+    lcd.clear();
+    lcd.print("Press A");
+    while(bool buttonPress = buttonA.getSingleDebouncedPress() == true){
+    break;
+      }
+    break;
+    }
       scanAround();
       if(sensorValues[0] != sensorValues[1]){
       findOp();
       }
 
+      if(detectLine() == 0){
       moveForward();
-      detectLine();
+      }
+      else{
+        continue;
+      }
+      
       i++;
     }
     
@@ -184,17 +198,22 @@ void stop()
   turningRight = false;
 }
 
-void detectLine(){
+int detectLine(){
   
   //lineSensors.readCalibrated(lineSensorValues);
    lineSensors.read(lineSensorValues);
-    if (lineSensorValues[0] > lineSensorThreshold || lineSensorValues[1] > lineSensorThreshold || lineSensorValues[2] > lineSensorThreshold)
+    if (lineSensorValues[0] < lineSensorThreshold || lineSensorValues[1] < lineSensorThreshold || lineSensorValues[2] < lineSensorThreshold)
     {
-      //lcd.gotoXY(0,0);
-      //lcd.clear();
-     // lcd.print("LINE");
-      
+      lcd.gotoXY(0,0);
+      lcd.clear();
+      lcd.print("LINE");
+      lcd.gotoXY(0,1);
+      lcd.print(String(lineSensorValues[0]) + " " + String(lineSensorValues[1]) + " " + String(lineSensorValues[2]));
+      motors.setSpeeds(0, 0);
+      turnRight();
+      return 1;
     }
+    return 0;
  }
 
 void findOp(){
@@ -219,7 +238,7 @@ void findOp(){
 
     
   
-    turnSpeed = constrain(100, 100, 100);
+    turnSpeed = constrain(200, 200, 200);
     
     
     if (objectSeen)
@@ -231,6 +250,7 @@ void findOp(){
       
         scanAround();
         if (sensorValues[0] < sensorValues[1])
+        
         {
           // The right value is greater, so the object is probably
           // closer to the robot's right LEDs, which means the robot
@@ -240,6 +260,7 @@ void findOp(){
           senseDir = RIGHT;
         }
         else if (sensorValues[0] > sensorValues[1])
+        
         {
           // The left value is greater, so turn to the left.
           turnLeft();
@@ -255,25 +276,8 @@ void findOp(){
     
       else
       {
-        // No object is seen, so just keep turning in the direction
-        // that we last sensed the object.
-        ledYellow(0);
-        scanAround();
-        while(sensorValues[0] < 1 && sensorValues[1] < 1 && sensorValues[2] < 1 && sensorValues[3] < 1){
-          if (senseDir == RIGHT)
-          {
-            turnRight();
-          }
-          else
-          {
-            turnLeft();
-          }
-          scanAround();
-        }
+        turnSpeed = constrain(300, 300, 300);
+        return;
       }
   }
 }
- 
-
-
-
